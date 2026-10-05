@@ -1,1 +1,2 @@
 # isticama-register
+صفحة التسجيل
