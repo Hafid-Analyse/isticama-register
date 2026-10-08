@@ -89,6 +89,9 @@
   button:disabled { opacity:.55; }
   button.ghost { background:transparent; color:var(--ink); border:1.5px solid var(--field-line); box-shadow:none; margin-top:10px; font-weight:700; }
   .err { color:#ff8a6b; font-size:14px; margin-top:12px; min-height:1em; }
+  .warnNote { margin-top:16px; padding:10px 12px; border-radius:14px; font-size:13.5px; line-height:1.7; text-align:center;
+              color:#ffd9a8; background:rgba(247,166,75,.10); border:1px solid rgba(247,166,75,.40); }
+  .warnNote b { color:#F7A64B; }
   .hint { color:var(--muted); font-size:13px; text-align:center; margin-top:12px; }
   .note { background:rgba(25,227,192,.1); color:var(--mint); border:1px solid rgba(25,227,192,.3); padding:12px; border-radius:16px; font-size:15px; font-weight:700; text-align:center; }
   #badgeImg { width:100%; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.5); display:block; margin-top:14px; }
@@ -170,10 +173,11 @@
     <label class="f">رقم الهاتف (واتساب)</label>
     <input id="phone" type="tel" inputmode="numeric" placeholder="0661234567" dir="ltr">
 
+    <div class="warnNote">⚠️ تأكّد من <b>الوظيفة</b> و<b>المستوى</b> و<b>سنوات الخبرة</b> — فلا يمكن تعديلها بعد التسجيل.</div>
     <div class="err" id="err"></div>
     <div id="pendBox" class="pend hidden">📶 لا يوجد اتصال بالإنترنت الآن.<br>حُفظ طلبك في الهاتف، وسيُرسل <b>تلقائياً</b> عند عودة الاتصال وتظهر بطاقتك.<br>يمكنك ترك الصفحة مفتوحة، أو فتح نفس الرابط لاحقاً.</div>
     <button type="submit" id="btn">تسجيل</button>
-    <div class="hint">إذا ضاعت بطاقتك، أعد التسجيل بنفس رقم الهاتف لتظهر لك من جديد.</div>
+    <div class="hint">إذا ضاعت بطاقتك أو أخطأت في كتابة اسمك، أعد التسجيل بنفس رقم الهاتف.</div>
     </div>
   </form>
 
