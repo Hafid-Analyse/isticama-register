@@ -453,11 +453,14 @@ async function drawBadge(r) {
   x.beginPath(); x.arc(gx + 40, py + ph - 10, 120, 0, 7); x.fill();
   x.beginPath(); x.arc(gx + gw - 30, py + 20, 60, 0, 7); x.fill();
   x.restore();
+  // المؤطر (ورشته تبدأ بـ«مؤطر»): لا مجموعة، تُكتب صفته مكان الرقم
+  const facil = /^مؤطر/.test(String(r.workshop || '').trim());
   x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,.88)'; x.font = '700 38px Cairo';
-  x.fillText('المجموعة', gx + gw / 2, py + 64);
+  x.fillText(facil ? 'الصفة' : 'المجموعة', gx + gw / 2, py + 64);
   x.fillStyle = AMBER; x.fillRect(gx + gw / 2 - 40, py + 84, 80, 6);
-  x.direction = 'ltr'; x.fillStyle = '#fff';
-  fitC(r.group ? String(r.group) : '—', gx + gw / 2, py + ph - 42, 800, 230, gw - 60);
+  x.fillStyle = '#fff';
+  if (facil) { x.direction = 'rtl'; fitC('مؤطر', gx + gw / 2, py + ph - 70, 800, 170, gw - 60); }
+  else { x.direction = 'ltr'; fitC(r.group ? String(r.group) : '—', gx + gw / 2, py + ph - 42, 800, 230, gw - 60); }
   // خانة الخبرة: بيضاء بإطار كهرماني
   x.direction = 'rtl';
   roundRect(tx, py, ew, ph, 30); x.fillStyle = '#FFF8EF'; x.fill();
