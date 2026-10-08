@@ -188,11 +188,24 @@
   </div>
 </div>
 
+<!-- تصحيح الاسم: نفس الشخص، والاسم المكتوب الآن يختلف عن المسجّل -->
+<div id="fix" class="modal hidden">
+  <div class="sheet">
+    <h3>✏️ أنت مسجّل مسبقاً</h3>
+    <p>الاسم المكتوب الآن يختلف عن الاسم المسجّل في بطاقتك:</p>
+    <div class="who" id="fixWho"></div>
+    <p style="margin-top:14px">هل تريد <b>تصحيح اسمك</b> في البطاقة؟ يبقى رمزك ومجموعتك كما هما.</p>
+    <button type="button" id="fixYes">✏️ نعم، صحّح اسمي</button>
+    <button type="button" id="fixNo" class="ghost">لا، أبقِ الاسم القديم</button>
+    <button type="button" id="fixBack" class="ghost">رجوع لتعديل ما كتبت</button>
+  </div>
+</div>
+
 <!-- تنبيه: معلومات مشابهة -->
 <div id="dup" class="modal hidden">
   <div class="sheet">
     <h3>تنبيه: معلومات مشابهة</h3>
-    <p>سبق تسجيل شخص بنفس الاسم واللقب واسم الأب:</p>
+    <p id="dupTxt">سبق تسجيل شخص بنفس الاسم واللقب واسم الأب:</p>
     <div class="who" id="dupWho"></div>
     <p style="margin-top:14px">هل أنت هذا الشخص؟</p>
     <button type="button" id="dupSame">نعم، هذا أنا</button>
@@ -297,7 +310,9 @@ function send(data) {
   api('register', { data })
     .then(r => {
       btn.disabled = false; btn.textContent = 'تسجيل';
-      if (r.duplicate) { pending = data; showDup(r.match); } else showBadge(r);
+      if (r.duplicate) { pending = data; showDup(r.match, r.exact); }
+      else if (r.correction) { pending = data; showFix(r); }
+      else showBadge(r);
     })
     .catch(err => {
       btn.disabled = false; btn.textContent = 'تسجيل';
@@ -322,7 +337,10 @@ function trySendPending() {
   if (!p || pendBusy) return;
   pendBusy = true;
   api('register', { data: p })
-    .then(r => { clearPending(); if (r.duplicate) { pending = p; showDup(r.match); } else showBadge(r); })
+    .then(r => { clearPending();
+      if (r.duplicate) { pending = p; showDup(r.match, r.exact); }
+      else if (r.correction) { pending = p; showFix(r); }
+      else showBadge(r); })
     .catch(err => { if (!err.net) { clearPending(); setErr(netMsg(err)); } })
     .finally(() => { pendBusy = false; });
 }
@@ -352,7 +370,8 @@ function renderSaved() {
 renderSaved();
 
 // نافذة التشابه
-function showDup(m) {
+function showDup(m, exact) {
+  $('dupTxt').textContent = exact === false ? 'سبق تسجيل شخص بمعلومات قريبة جداً من معلوماتك:' : 'سبق تسجيل شخص بنفس الاسم واللقب واسم الأب:';
   const rows = [['الاسم واللقب', m.name], ['اسم الأب', m.father], ['المدرسة', m.school], ['الوظيفة', m.role], ['الهاتف', m.phone]];
   $('dupWho').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b dir="auto">${esc(v)}</b></div>`).join('');
   $('dup').classList.remove('hidden');
@@ -361,6 +380,19 @@ function closeDup() { $('dup').classList.add('hidden'); }
 $('dupSame').addEventListener('click',  () => { closeDup(); send(Object.assign({}, pending, { confirm: 'same' })); });
 $('dupOther').addEventListener('click', () => { closeDup(); send(Object.assign({}, pending, { confirm: 'other' })); });
 $('dupBack').addEventListener('click',  closeDup);
+
+// نافذة التصحيح
+let fixCode = '';
+function showFix(r) {
+  fixCode = r.code;
+  const rows = [['المسجّل', r.old.name + ' بن ' + r.old.father], ['المكتوب الآن', r.now.name + ' بن ' + r.now.father]];
+  $('fixWho').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><b dir="auto">${esc(v)}</b></div>`).join('');
+  $('fix').classList.remove('hidden');
+}
+function closeFix() { $('fix').classList.add('hidden'); }
+$('fixYes').addEventListener('click',  () => { closeFix(); send(Object.assign({}, pending, { fix: 'yes', fixCode })); });
+$('fixNo').addEventListener('click',   () => { closeFix(); send(Object.assign({}, pending, { fix: 'no', fixCode })); });
+$('fixBack').addEventListener('click', closeFix);
 
 function genderVal() { return radioVal('gender'); }
 function radioVal(name) { const g = document.querySelector(`input[name=${name}]:checked`); return g ? g.value : ''; }
@@ -381,7 +413,7 @@ async function showBadge(r) {
   current = r;
   $('form').classList.add('hidden');
   $('result').classList.remove('hidden');
-  $('resNote').textContent = r.saved ? 'بطاقتك المحفوظة في هذا الهاتف' : r.existing ? 'أنت مسجّل مسبقاً — هذه بطاقتك' : 'تم تسجيلك بنجاح ✔';
+  $('resNote').textContent = r.saved ? 'بطاقتك المحفوظة في هذا الهاتف' : r.corrected ? 'تم تصحيح اسمك ✔ — هذه بطاقتك الجديدة' : r.existing ? 'أنت مسجّل مسبقاً — هذه بطاقتك' : 'تم تسجيلك بنجاح ✔';
   if (!r.saved) saveBadge(r);
   const url = await drawBadge(r);
   current.url = url;
