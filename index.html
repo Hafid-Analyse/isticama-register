@@ -89,6 +89,9 @@
   button:disabled { opacity:.55; }
   button.ghost { background:transparent; color:var(--ink); border:1.5px solid var(--field-line); box-shadow:none; margin-top:10px; font-weight:700; }
   .err { color:#ff8a6b; font-size:14px; margin-top:12px; min-height:1em; }
+  .closedHead { font-size:46px; text-align:center; line-height:1; margin-top:4px; }
+  .closedT { text-align:center; margin:10px 0 4px; font-size:22px; }
+  .closedP { text-align:center; color:var(--muted); font-size:14px; line-height:1.7; margin:0 0 6px; }
   .warnNote { margin-top:16px; padding:10px 12px; border-radius:14px; font-size:13.5px; line-height:1.7; text-align:center;
               color:#ffd9a8; background:rgba(247,166,75,.10); border:1px solid rgba(247,166,75,.40); }
   .warnNote b { color:#F7A64B; }
@@ -182,6 +185,18 @@
   </form>
 
   <!-- البطاقة -->
+  <!-- التسجيل مغلق: استرجاع البطاقة برقم الهاتف فقط -->
+  <div id="closed" class="card hidden">
+    <div class="closedHead">🔒</div>
+    <h2 class="closedT">انتهت فترة التسجيل</h2>
+    <p class="closedP">هل سجّلت سابقاً؟ اكتب رقم هاتفك الذي سجّلت به لعرض بطاقتك.</p>
+    <label class="f">رقم الهاتف (واتساب)</label>
+    <input id="cPhone" type="tel" inputmode="numeric" placeholder="0661234567" dir="ltr">
+    <div class="err" id="cErr"></div>
+    <button type="button" id="cBtn">عرض بطاقتي</button>
+    <div id="closedSaved"></div>
+  </div>
+
   <div id="result" class="card hidden">
     <div class="note" id="resNote"></div>
     <img id="badgeImg" alt="البطاقة">
@@ -414,6 +429,7 @@ function setErr(t) { $('err').textContent = t; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
 
 async function showBadge(r) {
+  $('againBtn').textContent = CONFIG.regOpen === false ? 'رجوع' : 'تسجيل شخص آخر';
   current = r;
   $('form').classList.add('hidden');
   $('result').classList.remove('hidden');
@@ -554,7 +570,26 @@ $('shareBtn').addEventListener('click', async () => {
   alert('اضغط مطولاً على البطاقة ثم اختر «حفظ الصورة» أو «مشاركة».');
 });
 
+// ====== التسجيل مغلق ======
+function showClosed() {
+  $('form').classList.add('hidden'); $('result').classList.add('hidden');
+  $('closed').classList.remove('hidden');
+  $('closedSaved').appendChild($('savedBox'));   // البطاقات المحفوظة تبقى ظاهرة
+  window.scrollTo(0, 0);
+}
+$('cBtn').addEventListener('click', () => {
+  const b = $('cBtn'); $('cErr').textContent = '';
+  b.disabled = true; b.textContent = 'جارٍ البحث...';
+  api('badge', { phone: $('cPhone').value.trim() })
+    .then(r => { $('closed').classList.add('hidden'); showBadge(r); })
+    .catch(e => { $('cErr').textContent = netMsg(e); })
+    .finally(() => { b.disabled = false; b.textContent = 'عرض بطاقتي'; });
+});
+$('cPhone').addEventListener('keydown', e => { if (e.key === 'Enter') $('cBtn').click(); });
+if (CONFIG.regOpen === false) showClosed();
+
 $('againBtn').addEventListener('click', () => {
+  if (CONFIG.regOpen === false) return showClosed();
   $('form').reset();
   $('levels').querySelectorAll('label').forEach(l => l.classList.remove('on'));
   document.querySelectorAll('#gender label, #exp label').forEach(l => l.classList.remove('on'));
